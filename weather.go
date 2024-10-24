@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const WEATHER_API = "https://api.open-meteo.com/v1/forecast?latitude=45.4918&longitude=9.2981&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,cloud_cover,wind_speed_10m&timeformat=unixtime&forecast_days=3"
+const WEATHER_API = "https://api.open-meteo.com/v1/forecast?latitude=45.4918&longitude=9.2981&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,cloud_cover,wind_speed_10m&timeformat=unixtime&forecast_days=1"
 
 type Weather struct {
 	Latitude             float64 `json:"latitude"`
@@ -30,14 +30,14 @@ type Weather struct {
 		WindSpeed10M             string `json:"wind_speed_10m"`
 	} `json:"hourly_units"`
 	Hourly struct {
-		Time                     []int     `json:"time"`
-		Temperature2M            []float64 `json:"temperature_2m"`
-		RelativeHumidity2M       []int     `json:"relative_humidity_2m"`
-		PrecipitationProbability []int     `json:"precipitation_probability"`
-		Precipitation            []float32 `json:"precipitation"`
-		WeatherCode              []int     `json:"weather_code"`
-		CloudCover               []int     `json:"cloud_cover"`
-		WindSpeed10M             []float32 `json:"wind_speed_10m"`
+    Time                     []int64     `json:"time"`
+		Temperature2M            []float64   `json:"temperature_2m"`
+		RelativeHumidity2M       []int       `json:"relative_humidity_2m"`
+		PrecipitationProbability []int       `json:"precipitation_probability"`
+		Precipitation            []float32   `json:"precipitation"`
+		WeatherCode              []int       `json:"weather_code"`
+		CloudCover               []int       `json:"cloud_cover"`
+		WindSpeed10M             []float32   `json:"wind_speed_10m"`
 	} `json:"hourly"`
 }
 
@@ -78,19 +78,22 @@ func main() {
 	}
 
 	for i, timestamp := range weather.Hourly.Time {
-		date := time.Unix(int64(timestamp), 0).Format("15:04")
+    t := time.Unix(timestamp, 0)
+    if t.After(time.Now()) {
+      date := time.Unix(timestamp, 0).Format("15:04")
 
-		r := []*simpletable.Cell{
-			{Text: fmt.Sprintf("%v", date)},
-			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", weather.Hourly.Temperature2M[i])},
-			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v°", weather.Hourly.RelativeHumidity2M[i])},
-			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v %%", weather.Hourly.PrecipitationProbability[i])},
-			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%vmm", weather.Hourly.Precipitation[i])},
-			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", weather.Hourly.WeatherCode[i])},
-			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v %%", weather.Hourly.CloudCover[i])},
-			{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", weather.Hourly.WindSpeed10M[i])},
-		}
-		table.Body.Cells = append(table.Body.Cells, r)
+		  r := []*simpletable.Cell{
+		  	{Text: fmt.Sprintf("%v", date)},
+		  	{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", weather.Hourly.Temperature2M[i])},
+		  	{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v°", weather.Hourly.RelativeHumidity2M[i])},
+		  	{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v %%", weather.Hourly.PrecipitationProbability[i])},
+		  	{Align: simpletable.AlignRight, Text: fmt.Sprintf("%vmm", weather.Hourly.Precipitation[i])},
+		  	{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", weather.Hourly.WeatherCode[i])},
+		  	{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v %%", weather.Hourly.CloudCover[i])},
+		  	{Align: simpletable.AlignRight, Text: fmt.Sprintf("%v", weather.Hourly.WindSpeed10M[i])},
+		  }
+		  table.Body.Cells = append(table.Body.Cells, r)
+    }
 	}
 	table.SetStyle(simpletable.StyleUnicode)
 	fmt.Println(table.String())
